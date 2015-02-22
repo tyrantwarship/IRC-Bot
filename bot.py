@@ -9,6 +9,7 @@ import os
 from time import time
 from flask import Flask, render_template
 import threading
+import re
 
 previousStreamsLink = "http://www.watchpeoplecode.com/past_streams"
 apiUrl = "http://www.watchpeoplecode/json"
@@ -57,10 +58,13 @@ class Bot:
     def Check(self, data, cmd):
         data = data.lower()
         cmd = cmd.lower()
+        """
         if(data.find(cmd) != -1):
             return True
         else:
             return False
+        """
+        return (data.find(cmd) != -1)
 
     def GetJSON(self, ):
         return requests.get('http://www.watchpeoplecode.com/json').json()
@@ -87,12 +91,15 @@ class Bot:
             for obj in response['upcoming']:
                 self.Send(self.channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
 
+    """
     def ParseData(self, data):
         parsed = data.split(':')
         result = []
 
-        if '' in parsed:
-            parsed.remove('')
+        tmp = [e for e in parsed if e != '']
+        # if '' in parsed:
+        #     parsed.remove('')
+        parsed = tmp
         try:
             if 'PRIVMSG' in parsed[0]:
                 while len(parsed) >= 2:
@@ -104,6 +111,18 @@ class Bot:
         except:
             print("ParseData failed")
 
+        return result
+    """
+
+    def ParseData(self, data):
+        result = []
+        sender_pattern = r'^:(.*)!'
+        message_pattern = r'PRIVMSG #?\S* :(.*)'
+        sender_match = re.search(sender_pattern, data)
+        message_match = re.search(message_pattern, data)
+        if sender_match is not None and message_match is not None:
+            result.append({'sender': sender_match.group(1), 'message': message_match.group(1)})
+            return result
         return result
 
     def Run(self):
